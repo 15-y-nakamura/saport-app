@@ -27,3 +27,9 @@ use App\Http\Controllers\ScheduleController;
 Route::post('/schedule-add', [ScheduleController::class, 'scheduleAdd'])->name('schedule-add');
 // イベント取得処理
 Route::post('/schedule-get', [ScheduleController::class, 'scheduleGet'])->name('schedule-get');
+
+//イベント更新処理
+Route::post('/schedule-update', [ScheduleController::class, 'scheduleUpdate'])->name('schedule-update');
+
+//イベント削除処理
+Route::post('/schedule-delete', [ScheduleController::class, 'scheduleDelete'])->name('schedule-delete');
