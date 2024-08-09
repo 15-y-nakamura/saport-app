@@ -17,14 +17,13 @@ let calendar = new Calendar(calendarEl, {
     },
     locale: "ja",
 
-    // 日付をクリック、または範囲を選択したイベント
     selectable: true,
+    editable: true,
+
     select: function (info) {
-        // 入力ダイアログ
         const eventName = prompt("イベントを入力してください");
 
         if (eventName) {
-            // Laravelの登録処理の呼び出し
             axios
                 .post("/schedule-add", {
                     start_date: info.start.valueOf(),
@@ -32,9 +31,8 @@ let calendar = new Calendar(calendarEl, {
                     event_name: eventName,
                 })
                 .then((response) => {
-                    // イベントの追加
                     calendar.addEvent({
-                        id: response.data.id, // イベントIDをセット
+                        id: response.data.id,
                         title: eventName,
                         start: info.start,
                         end: info.end,
@@ -42,13 +40,11 @@ let calendar = new Calendar(calendarEl, {
                     });
                 })
                 .catch(() => {
-                    // バリデーションエラーなど
                     alert("登録に失敗しました");
                 });
         }
     },
 
-    // イベントの取得処理
     events: function (info, successCallback, failureCallback) {
         axios
             .post("/schedule-get", {
@@ -56,10 +52,9 @@ let calendar = new Calendar(calendarEl, {
                 end_date: info.end.valueOf(),
             })
             .then((response) => {
-                // カレンダーに読み込み
                 successCallback(response.data.map(event => ({
                     ...event,
-                    id: event.id  // イベントIDをセット
+                    id: event.id
                 })));
             })
             .catch(() => {
@@ -67,25 +62,20 @@ let calendar = new Calendar(calendarEl, {
             });
     },
 
-    // イベントをクリックしたときの処理（編集および削除）
     eventClick: function(info) {
-        // 編集か削除かを選択させる
         const action = prompt('イベントを編集する場合は名前を変更してください。\n削除する場合は「削除」と入力してください。', info.event.title);
 
         if (action === null) {
-            // ユーザーがキャンセルした場合
             return;
         }
 
         if (action.toLowerCase() === '削除') {
-            // 削除処理
             if (confirm("このイベントを削除しますか？")) {
                 axios
                     .post("/schedule-delete", {
                         id: info.event.id,
                     })
                     .then(() => {
-                        // カレンダーからイベントを削除
                         info.event.remove();
                     })
                     .catch(() => {
@@ -93,18 +83,16 @@ let calendar = new Calendar(calendarEl, {
                     });
             }
         } else {
-            // 編集処理
             const eventName = action;
             if (eventName) {
                 axios
                     .post("/schedule-update", {
                         id: info.event.id,
                         start_date: info.event.start.valueOf(),
-                        end_date: info.event.end ? info.event.end.valueOf() : info.event.start.valueOf(), // endがない場合はstartと同じにする
+                        end_date: info.event.end ? info.event.end.valueOf() : info.event.start.valueOf(),
                         event_name: eventName,
                     })
                     .then(() => {
-                        // イベントの更新
                         info.event.setProp('title', eventName);
                     })
                     .catch(() => {
@@ -112,7 +100,55 @@ let calendar = new Calendar(calendarEl, {
                     });
             }
         }
+    },
+
+    eventDrop: function(info) {
+        axios
+            .post("/schedule-update", {
+                id: info.event.id,
+                start_date: info.event.start.valueOf(),
+                end_date: info.event.end ? info.event.end.valueOf() : info.event.start.valueOf(),
+                event_name: info.event.title,
+            })
+            .then(() => {
+                alert("イベントが更新されました");
+            })
+            .catch(() => {
+                alert("更新に失敗しました");
+            });
     }
 });
 
 calendar.render();
+
+// マウスホイールでの月移動を実装
+calendarEl.addEventListener('wheel', function(event) {
+    if (event.deltaY < 0) {
+        calendar.prev(); // 前の月へ移動
+    } else if (event.deltaY > 0) {
+        calendar.next(); // 次の月へ移動
+    }
+    event.preventDefault(); // スクロールイベントを止める
+});
+
+// ドラッグ中に月を自動で移動する（ゆっくり移動）
+let autoScrollInterval = null;
+document.addEventListener('mousemove', function(event) {
+    const buffer = 50; // 画面端から何ピクセルで移動をトリガーするか
+    const x = event.clientX;
+    const y = event.clientY;
+
+    clearInterval(autoScrollInterval); // 前のスクロール処理をクリア
+
+    autoScrollInterval = setInterval(function() {
+        if (x < buffer) {
+            calendar.prev(); // 画面左端に近づいたら前の月へ
+        } else if (x > window.innerWidth - buffer) {
+            calendar.next(); // 画面右端に近づいたら次の月へ
+        } else if (y < buffer) {
+            calendar.prev(); // 画面上端に近づいたら前の月へ
+        } else if (y > window.innerHeight - buffer) {
+            calendar.next(); // 画面下端に近づいたら次の月へ
+        }
+    }, 1000); // 1秒ごとに月移動をトリガー
+});
