@@ -20,3 +20,10 @@ Route::get('/', function () {
 Route::get('/calendar', function () {
     return view('calendar');
 });
+
+use App\Http\Controllers\ScheduleController;
+
+// イベント登録処理
+Route::post('/schedule-add', [ScheduleController::class, 'scheduleAdd'])->name('schedule-add');
+// イベント取得処理
+Route::post('/schedule-get', [ScheduleController::class, 'scheduleGet'])->name('schedule-get');
