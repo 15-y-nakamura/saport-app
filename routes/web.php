@@ -19,3 +19,8 @@ Route::post('/schedule-get', [ScheduleController::class, 'scheduleGet'])->name('
 Route::post('/schedule-update', [ScheduleController::class, 'scheduleUpdate'])->name('schedule-update');
 // イベント削除処理
 Route::post('/schedule-delete', [ScheduleController::class, 'scheduleDelete'])->name('schedule-delete');
+
+// イベント追加フォームの表示
+Route::get('/schedule-add-form', function () {
+    return view('schedule-add-form');
+})->name('schedule-add-form');
