@@ -21,28 +21,37 @@ let calendar = new Calendar(calendarEl, {
     editable: true,
 
     select: function (info) {
-        const eventName = prompt("イベントを入力してください");
+        // ポップアップフォームを表示してイベントの詳細を入力
+        const form = promptForm(); // カスタムフォーム関数で詳細を入力
 
-        if (eventName) {
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
             axios
                 .post("/schedule-add", {
                     start_date: info.start.valueOf(),
                     end_date: info.end.valueOf(),
-                    event_name: eventName,
+                    event_name: formData.get("event_name"),
+                    location: formData.get("location"),
+                    link: formData.get("link"),
+                    memo: formData.get("memo"),
                 })
                 .then((response) => {
                     calendar.addEvent({
                         id: response.data.id,
-                        title: eventName,
+                        title: formData.get("event_name"),
                         start: info.start,
                         end: info.end,
                         allDay: true,
                     });
+                    form.remove();
                 })
                 .catch(() => {
                     alert("登録に失敗しました");
+                    form.remove();
                 });
-        }
+        };
     },
 
     events: function (info, successCallback, failureCallback) {
@@ -83,22 +92,31 @@ let calendar = new Calendar(calendarEl, {
                     });
             }
         } else {
-            const eventName = action;
-            if (eventName) {
+            const form = promptForm(info.event);
+
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+
                 axios
                     .post("/schedule-update", {
                         id: info.event.id,
                         start_date: info.event.start.valueOf(),
                         end_date: info.event.end ? info.event.end.valueOf() : info.event.start.valueOf(),
-                        event_name: eventName,
+                        event_name: formData.get("event_name"),
+                        location: formData.get("location"),
+                        link: formData.get("link"),
+                        memo: formData.get("memo"),
                     })
                     .then(() => {
-                        info.event.setProp('title', eventName);
+                        info.event.setProp('title', formData.get("event_name"));
+                        form.remove();
                     })
                     .catch(() => {
                         alert("更新に失敗しました");
+                        form.remove();
                     });
-            }
+            };
         }
     },
 
@@ -120,6 +138,34 @@ let calendar = new Calendar(calendarEl, {
 });
 
 calendar.render();
+
+// ポップアップフォームのカスタム関数
+function promptForm(event = null) {
+    const form = document.createElement('form');
+
+    form.innerHTML = `
+        <label>
+            タイトル:
+            <input type="text" name="event_name" value="${event ? event.title : ''}">
+        </label>
+        <label>
+            場所:
+            <input type="text" name="location" value="${event ? event.extendedProps.location : ''}">
+        </label>
+        <label>
+            リンク:
+            <input type="url" name="link" value="${event ? event.extendedProps.link : ''}">
+        </label>
+        <label>
+            メモ:
+            <input type="text" name="memo" value="${event ? event.extendedProps.memo : ''}">
+        </label>
+        <button type="submit">保存</button>
+    `;
+
+    document.body.appendChild(form);
+    return form;
+}
 
 // マウスホイールでの月移動を実装
 calendarEl.addEventListener('wheel', function(event) {

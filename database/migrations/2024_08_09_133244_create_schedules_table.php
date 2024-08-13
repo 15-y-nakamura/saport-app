@@ -6,27 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
-            $table->date('start_date')->comment('開始日');
-            $table->date('end_date')->comment('終了日');
+            $table->dateTime('start_date')->comment('開始日時');
+            $table->dateTime('end_date')->comment('終了日時');
             $table->string('event_name')->comment('イベント名');
+            $table->string('location')->nullable()->comment('場所');
+            $table->string('link')->nullable()->comment('リンク');
+            $table->string('memo')->nullable()->comment('メモ');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::dropIfExists('schedules');

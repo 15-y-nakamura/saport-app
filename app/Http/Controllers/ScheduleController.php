@@ -6,58 +6,48 @@ use App\Models\Schedule;
 
 class ScheduleController extends Controller
 {
-    /**
-     * イベントを登録
-     *
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function scheduleAdd(Request $request)
     {
-        // バリデーション
         $request->validate([
             'start_date' => 'required|integer',
             'end_date' => 'required|integer',
             'event_name' => 'required|max:32',
+            'location' => 'nullable|string|max:255',
+            'link' => 'nullable|url|max:255',
+            'memo' => 'nullable|string|max:255',
         ]);
 
-        // 登録処理
         $schedule = new Schedule;
-        // 日付に変換。JavaScriptのタイムスタンプはミリ秒なので秒に変換
-        $schedule->start_date = date('Y-m-d', $request->input('start_date') / 1000);
-        $schedule->end_date = date('Y-m-d', $request->input('end_date') / 1000);
+        $schedule->start_date = date('Y-m-d H:i:s', $request->input('start_date') / 1000);
+        $schedule->end_date = date('Y-m-d H:i:s', $request->input('end_date') / 1000);
         $schedule->event_name = $request->input('event_name');
+        $schedule->location = $request->input('location');
+        $schedule->link = $request->input('link');
+        $schedule->memo = $request->input('memo');
         $schedule->save();
 
-        // 新しく作成されたイベントIDを返す
         return response()->json(['id' => $schedule->id, 'status' => 'success']);
     }
 
-    /**
-     * イベントを取得
-     *
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function scheduleGet(Request $request)
     {
-        // バリデーション
         $request->validate([
             'start_date' => 'required|integer',
             'end_date' => 'required|integer'
         ]);
 
-        // カレンダー表示期間
-        $start_date = date('Y-m-d', $request->input('start_date') / 1000);
-        $end_date = date('Y-m-d', $request->input('end_date') / 1000);
+        $start_date = date('Y-m-d H:i:s', $request->input('start_date') / 1000);
+        $end_date = date('Y-m-d H:i:s', $request->input('end_date') / 1000);
 
-        // 登録処理
         $events = Schedule::query()
             ->select(
-                'id', // イベントIDを含める
+                'id',
                 'start_date as start',
                 'end_date as end',
-                'event_name as title'
+                'event_name as title',
+                'location',
+                'link',
+                'memo'
             )
             ->where('end_date', '>', $start_date)
             ->where('start_date', '<', $end_date)
@@ -66,29 +56,26 @@ class ScheduleController extends Controller
         return response()->json($events);
     }
 
-    /**
-     * イベントを更新
-     *
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function scheduleUpdate(Request $request)
     {
-        // バリデーション
         $request->validate([
             'id' => 'required|integer',
             'start_date' => 'required|integer',
             'end_date' => 'required|integer',
             'event_name' => 'required|max:32',
+            'location' => 'nullable|string|max:255',
+            'link' => 'nullable|url|max:255',
+            'memo' => 'nullable|string|max:255',
         ]);
 
-        // 更新処理
         $schedule = Schedule::find($request->input('id'));
         if ($schedule) {
-            // 日付に変換。JavaScriptのタイムスタンプはミリ秒なので秒に変換
-            $schedule->start_date = date('Y-m-d', $request->input('start_date') / 1000);
-            $schedule->end_date = date('Y-m-d', $request->input('end_date') / 1000);
+            $schedule->start_date = date('Y-m-d H:i:s', $request->input('start_date') / 1000);
+            $schedule->end_date = date('Y-m-d H:i:s', $request->input('end_date') / 1000);
             $schedule->event_name = $request->input('event_name');
+            $schedule->location = $request->input('location');
+            $schedule->link = $request->input('link');
+            $schedule->memo = $request->input('memo');
             $schedule->save();
 
             return response()->json(['status' => 'success']);
@@ -99,12 +86,10 @@ class ScheduleController extends Controller
 
     public function scheduleDelete(Request $request)
     {
-        // バリデーション
         $request->validate([
             'id' => 'required|integer',
         ]);
 
-        // 削除処理
         $schedule = Schedule::find($request->input('id'));
         if ($schedule) {
             $schedule->delete();
@@ -112,5 +97,4 @@ class ScheduleController extends Controller
 
         return response()->json(['status' => 'success']);
     }
-
 }
