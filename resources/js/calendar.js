@@ -21,28 +21,12 @@ let calendar = new Calendar(calendarEl, {
     editable: true,
 
     select: function (info) {
-        const eventName = prompt("イベントを入力してください");
+        const formData = new FormData();
 
-        if (eventName) {
-            axios
-                .post("/schedule-add", {
-                    start_date: info.start.valueOf(),
-                    end_date: info.end.valueOf(),
-                    event_name: eventName,
-                })
-                .then((response) => {
-                    calendar.addEvent({
-                        id: response.data.id,
-                        title: eventName,
-                        start: info.start,
-                        end: info.end,
-                        allDay: true,
-                    });
-                })
-                .catch(() => {
-                    alert("登録に失敗しました");
-                });
-        }
+        formData.append('start_date', info.start.valueOf());
+        formData.append('end_date', info.end.valueOf());
+
+        window.location.href = '/schedule-add-form?' + new URLSearchParams(formData).toString();
     },
 
     events: function (info, successCallback, failureCallback) {
@@ -83,22 +67,31 @@ let calendar = new Calendar(calendarEl, {
                     });
             }
         } else {
-            const eventName = action;
-            if (eventName) {
+            const form = promptForm(info.event);
+
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+
                 axios
                     .post("/schedule-update", {
                         id: info.event.id,
                         start_date: info.event.start.valueOf(),
                         end_date: info.event.end ? info.event.end.valueOf() : info.event.start.valueOf(),
-                        event_name: eventName,
+                        event_name: formData.get("event_name"),
+                        location: formData.get("location"),
+                        link: formData.get("link"),
+                        memo: formData.get("memo"),
                     })
                     .then(() => {
-                        info.event.setProp('title', eventName);
+                        info.event.setProp('title', formData.get("event_name"));
+                        form.remove();
                     })
                     .catch(() => {
                         alert("更新に失敗しました");
+                        form.remove();
                     });
-            }
+            };
         }
     },
 
@@ -151,4 +144,8 @@ document.addEventListener('mousemove', function(event) {
             calendar.next(); // 画面下端に近づいたら次の月へ
         }
     }, 1000); // 1秒ごとに月移動をトリガー
+});
+
+document.getElementById('add-event-button').addEventListener('click', function() {
+    window.location.href = '/schedule-add-form'; // 新しいイベント追加ページへの遷移
 });
