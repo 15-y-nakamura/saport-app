@@ -17,6 +17,8 @@ Route::post('/schedule-add', [ScheduleController::class, 'scheduleAdd'])->name('
 Route::post('/schedule-get', [ScheduleController::class, 'scheduleGet'])->name('schedule-get');
 // イベント更新処理
 Route::post('/schedule-update', [ScheduleController::class, 'scheduleUpdate'])->name('schedule-update');
+// イベントドロップ更新処理
+Route::post('/schedule-drop-update', [ScheduleController::class, 'scheduleDropUpdate'])->name('schedule-drop-update');
 // イベント削除処理
 Route::post('/schedule-delete', [ScheduleController::class, 'scheduleDelete'])->name('schedule-delete');
 

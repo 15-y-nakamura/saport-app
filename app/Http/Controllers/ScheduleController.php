@@ -39,7 +39,7 @@ class ScheduleController extends Controller
         return response()->json(['id' => $schedule->id, 'status' => 'success']);
     }
 
-    public function scheduleUpdate(Request $request)
+    public function scheduleDropUpdate(Request $request)
     {
         $request->validate([
             'id' => 'required|integer',
@@ -75,6 +75,35 @@ class ScheduleController extends Controller
 
         return redirect('/calendar')->with('error', 'イベントが見つかりませんでした');
     }
+
+    public function scheduleUpdate(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer',
+            'start_date' => 'required|integer',
+            'end_date' => 'required|integer',
+            'event_name' => 'required|max:32',
+            'location' => 'nullable|string|max:255',
+            'link' => 'nullable|url|max:255',
+            'memo' => 'nullable|string|max:255',
+        ]);
+
+        $schedule = Schedule::find($request->input('id'));
+        if ($schedule) {
+            $schedule->start_date = date('Y-m-d H:i:s', $request->input('start_date') / 1000);
+            $schedule->end_date = date('Y-m-d H:i:s', $request->input('end_date') / 1000);
+            $schedule->event_name = $request->input('event_name');
+            $schedule->location = $request->input('location');
+            $schedule->link = $request->input('link');
+            $schedule->memo = $request->input('memo');
+            $schedule->save();
+
+            return response()->json(['status' => 'success']);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'スケジュールが見つかりませんでした。'], 404);
+    }
+
 
     public function scheduleGet(Request $request)
     {
