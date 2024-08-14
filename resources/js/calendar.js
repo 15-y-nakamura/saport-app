@@ -103,7 +103,7 @@ let calendar = new Calendar(calendarEl, {
 
     eventDrop: function(info) {
         axios
-            .post("/schedule-update", {
+            .post("/schedule-drop-update", {
                 id: info.event.id,
                 start_date: info.event.start.valueOf(),
                 end_date: info.event.end ? info.event.end.valueOf() : info.event.start.valueOf(),
