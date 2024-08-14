@@ -24,3 +24,6 @@ Route::post('/schedule-delete', [ScheduleController::class, 'scheduleDelete'])->
 Route::get('/schedule-add-form', function () {
     return view('schedule-add-form');
 })->name('schedule-add-form');
+
+// 編集フォームの表示
+Route::get('/schedule-edit-form/{id}', [ScheduleController::class, 'showEditForm'])->name('schedule-edit-form');
