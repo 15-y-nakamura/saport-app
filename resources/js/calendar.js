@@ -47,52 +47,58 @@ let calendar = new Calendar(calendarEl, {
     },
 
     eventClick: function(info) {
-        const action = prompt('イベントを編集する場合は名前を変更してください。\n削除する場合は「削除」と入力してください。', info.event.title);
+        // ポップアップウィンドウを作成
+        const popup = document.createElement('div');
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.backgroundColor = '#fff';
+        popup.style.padding = '20px';
+        popup.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+        popup.style.zIndex = '1000';
 
-        if (action === null) {
-            return;
-        }
+        // イベント情報を表示
+        popup.innerHTML = `
+            <p><strong>タイトル:</strong> ${info.event.title}</p>
+            <p><strong>開始日時:</strong> ${info.event.start.toLocaleString()}</p>
+            <p><strong>終了日時:</strong> ${info.event.end ? info.event.end.toLocaleString() : 'なし'}</p>
+            <p><strong>場所:</strong> ${info.event.extendedProps.location || 'なし'}</p>
+            <p><strong>リンク:</strong> <a href="${info.event.extendedProps.link}" target="_blank">${info.event.extendedProps.link || 'なし'}</a></p>
+            <p><strong>メモ:</strong> ${info.event.extendedProps.memo || 'なし'}</p>
+            <button id="edit-button">編集</button>
+            <button id="delete-button">削除</button>
+            <button id="close-button">戻る</button>
+        `;
 
-        if (action.toLowerCase() === '削除') {
-            if (confirm("このイベントを削除しますか？")) {
-                axios
-                    .post("/schedule-delete", {
-                        id: info.event.id,
-                    })
-                    .then(() => {
-                        info.event.remove();
-                    })
-                    .catch(() => {
-                        alert("削除に失敗しました");
-                    });
+        document.body.appendChild(popup);
+
+        // 戻るボタンのイベント
+        document.getElementById('close-button').addEventListener('click', () => {
+            document.body.removeChild(popup);
+        });
+
+        // 編集ボタンのイベント
+        document.getElementById('edit-button').addEventListener('click', () => {
+            window.location.href = `/schedule-edit-form/${info.event.id}`;
+        });
+
+        // 削除ボタンのイベント
+        document.getElementById('delete-button').addEventListener('click', () => {
+            if (confirm('このイベントを削除しますか？')) {
+                axios.post('/schedule-delete', {
+                    id: info.event.id
+                })
+                .then(() => {
+                    info.event.remove();
+                    alert('イベントが削除されました。');
+                    document.body.removeChild(popup);
+                })
+                .catch(() => {
+                    alert('削除に失敗しました。');
+                });
             }
-        } else {
-            const form = promptForm(info.event);
-
-            form.onsubmit = (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-
-                axios
-                    .post("/schedule-update", {
-                        id: info.event.id,
-                        start_date: info.event.start.valueOf(),
-                        end_date: info.event.end ? info.event.end.valueOf() : info.event.start.valueOf(),
-                        event_name: formData.get("event_name"),
-                        location: formData.get("location"),
-                        link: formData.get("link"),
-                        memo: formData.get("memo"),
-                    })
-                    .then(() => {
-                        info.event.setProp('title', formData.get("event_name"));
-                        form.remove();
-                    })
-                    .catch(() => {
-                        alert("更新に失敗しました");
-                        form.remove();
-                    });
-            };
-        }
+        });
     },
 
     eventDrop: function(info) {
